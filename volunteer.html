@@ -73,7 +73,7 @@ button,a{font:inherit}.layout{min-height:100vh;display:grid;grid-template-column
 
   <section class="panel" id="opportunitiesPanel"><div class="box"><h2 class="section-title">Volunteer opportunities</h2><p class="muted">Explore current opportunities and submit your interest.</p><div id="volOpportunityList"><div class="empty"><b>Loading opportunities…</b><p>Please wait.</p></div></div></div></section>
 
-  <section class="panel" id="activitiesPanel"><div class="box"><h2 class="section-title">My opportunity applications</h2><p class="muted">Track the status of opportunities you have applied for.</p><div id="myOpportunityResponses"><div class="empty"><b>Loading your applications…</b><p>Please wait.</p></div></div></div><div class="box"><h2 class="section-title">My activities</h2><div class="empty"><b>Activity records are not available yet</b><p>TBARC programme participation and attendance history will appear here when that module is introduced.</p></div></div></section>
+  <section class="panel" id="activitiesPanel"><div class="box"><h2 class="section-title">My opportunity applications</h2><p class="muted">Track the status of opportunities you have applied for.</p><div id="myOpportunityResponses"><div class="empty"><b>Loading your applications…</b><p>Please wait.</p></div></div></div><div class="box"><h2 class="section-title">My assigned activities</h2><p class="muted">Activities assigned to you and your recorded attendance.</p><div id="myAssignedActivities"><div class="empty"><b>Loading activities…</b><p>Please wait.</p></div></div></div></section>
 
   <section class="panel" id="documentsPanel">
     <div class="box"><h2 class="section-title">Certificates & digital ID</h2><div class="empty"><b>Your documents will appear here</b><p>Certificates, volunteer ID cards and other documents issued by TBARC will be listed here when connected to your account.</p></div></div>
@@ -127,10 +127,23 @@ function loadVolunteerOpportunities(){request({action:'volunteerOpportunitiesDat
 function applyVolunteerOpportunity(id){const message=window.prompt('Add a short message for the TBARC team (optional):')||'';request({action:'applyOpportunity',token,opportunityId:id,message},data=>{showNotice(data.message);loadVolunteerOpportunities();});}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-apply]');if(b)applyVolunteerOpportunity(b.dataset.apply);});
 
+
+let myActivitiesCache=[];
+function renderMyActivities(){
+ const host=$('myAssignedActivities');
+ host.innerHTML=myActivitiesCache.length?myActivitiesCache.map(x=>{
+  const a=x.activity||{};
+  return '<div class="profile-item" style="margin:10px 0"><strong>'+escapeHtml(a.Title||'Activity')+'</strong><small>'+escapeHtml(a.Activity_Date||'Date to be announced')+' · '+escapeHtml(a.Location||'Location not specified')+'</small><p class="muted" style="margin:6px 0">Status: <b>'+escapeHtml(a.Status||'Planned')+'</b> · Attendance: <b>'+escapeHtml(x.attendanceStatus||'Not Marked')+'</b></p><p class="muted" style="margin:4px 0">Participation hours: <b>'+escapeHtml(x.hours||0)+'</b> · Assigned via: '+escapeHtml(x.assignmentSource||'TBARC')+'</p>'+(x.remarks?'<p class="muted">Remarks: '+escapeHtml(x.remarks)+'</p>':'')+'</div>';
+ }).join(''):'<div class="empty"><b>No activities assigned yet</b><p>When TBARC assigns you to an activity, it will appear here.</p></div>';
+}
+function loadMyActivities(){
+ request({action:'volunteerActivitiesData',token},data=>{myActivitiesCache=data.activities||[];renderMyActivities();});
+}
+
 function logout(){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');sessionStorage.removeItem('tbarc_name');location.href='login.html';}
 $('logoutBtn').addEventListener('click',logout);
 if(!token||role!=='Volunteer'){logout();}
-else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();loadVolunteerOpportunities();});}
+else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();loadVolunteerOpportunities();loadMyActivities();});}
 
 function renderDashboard(){
  const v=volunteer,p=v.profile||{},name=v.fullName||p.fullName||'Volunteer';
