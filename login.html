@@ -33,7 +33,14 @@ function send(payload,button,successCallback){
 }
 function submitForm(formId,action,collect,onSuccess){$(formId).addEventListener('submit',e=>{e.preventDefault();const button=$(formId).querySelector('button[type="submit"]');const data=collect();send({action,...data},button,onSuccess);});}
 $('forgotBtn').onclick=()=>showPanel('forgot','Reset your password','We will email a secure password-reset link if the account exists.');$('backLogin').onclick=()=>showPanel('login','Volunteer Login','Sign in to access your volunteer account and activities.');
-submitForm('loginForm','login',()=>({email:$('loginEmail').value.trim(),password:$('loginPassword').value}),data=>{sessionStorage.setItem('tbarc_session',data.token);sessionStorage.setItem('tbarc_role',data.role);sessionStorage.setItem('tbarc_name',data.name||'');if(data.role==='Super Admin'){message('Login successful. Opening the administrator dashboard…',true);setTimeout(()=>location.href='admin.html',500);}else{message('Login successful. Your volunteer dashboard will be available in the next portal update.',true);}});
+submitForm('loginForm','login',()=>({email:$('loginEmail').value.trim(),password:$('loginPassword').value}),data=>{
+ sessionStorage.setItem('tbarc_session',data.token);
+ sessionStorage.setItem('tbarc_role',data.role);
+ sessionStorage.setItem('tbarc_name',data.name||'');
+ if(data.role==='Super Admin'){location.href='admin.html';}
+ else if(data.role==='Volunteer'){location.href='volunteer.html';}
+ else {message('Your account role is not authorised for a portal dashboard. Please contact TBARC.');}
+});
 submitForm('forgotForm','resetRequest',()=>({email:$('forgotEmail').value.trim()}),data=>message(data.message,true));
 function passwordCollect(prefix){const a=$(prefix+'Password').value,b=$(prefix+'Confirm').value;if(a!==b){message('The passwords do not match.');return null;}if(a.length<12||!/[A-Z]/.test(a)||!/[a-z]/.test(a)||!/[0-9]/.test(a)){message('Use at least 12 characters, including uppercase, lowercase and a number.');return null;}return a;}
 submitForm('activateForm','activate',()=>{const password=passwordCollect('activate');return password?{email:emailParam,token:tokenParam,password}:null;},data=>{showPanel('login','Account activated','Your account is ready. Sign in with your email and new password.');$('loginEmail').value=emailParam;message(data.message,true);history.replaceState({},'',location.pathname);});
