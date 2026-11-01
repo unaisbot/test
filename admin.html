@@ -132,7 +132,7 @@ function renderActivities(){
   const n=assigns.filter(x=>x.Activity_ID===a.Activity_ID).length;
   return '<tr><td><strong>'+escapeHtml(a.Title)+'</strong></td><td>'+escapeHtml(a.Activity_Date||'—')+'</td><td>'+escapeHtml(a.Location||'—')+'</td><td>'+statusPill(a.Status)+'</td><td>'+n+'</td><td><div class="actions"><button class="btn btn-light smallbtn" data-act-edit="'+escapeHtml(a.Activity_ID)+'">Edit</button><button class="btn smallbtn" data-act-select="'+escapeHtml(a.Activity_ID)+'">Participants</button></div></td></tr>';
  }).join(''):'<tr><td colspan="6" class="empty">No activities created yet.</td></tr>';
- if(selectedActivityId)renderAssignments();
+ if(selectedActivityId)selectActivity(selectedActivityId);
 }
 function resetActivityForm(){
  $('activityForm').reset();$('activityId').value='';$('activityFormTitle').textContent='Create an activity';
