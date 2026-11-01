@@ -105,7 +105,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:0 15px 25px}
 </section>
 <div class="actions"><a class="back" href="index.html">← Back to volunteer homepage</a><button class="btn" type="submit">Submit Application →</button></div>
 <div class="notice" id="notice" role="status">The registration form layout is ready, but secure submission is not connected yet. Your information has not been sent or stored. The next step is to connect this page to the TBARC Apps Script backend.</div>
-<div class="notice" id="success" role="status" style="background:#edf7ef;border-color:#b9d8c0;color:#174b2b"></div>\n</form>\n<iframe name="tbarcSubmitFrame" id="tbarcSubmitFrame" title="Application submission" style="display:none"></iframe>
+<div class="notice" id="success" role="status" style="background:#edf7ef;border-color:#b9d8c0;color:#174b2b"></div>
+</form>
+<iframe name="tbarcSubmitFrame" id="tbarcSubmitFrame" title="Application submission" style="display:none"></iframe>
 </main>
 <footer>© 2026 Tropical Biodiversity Action and Research Centre (TBARC India)</footer>
 <script>
@@ -134,13 +136,15 @@ function fileAsPayload(file, maxBytes) {
   });
 }
 
+let submissionTimer = null;
+
 form.addEventListener('submit', async function(event) {
   event.preventDefault();
   notice.style.display = 'none';
   success.style.display = 'none';
 
   if (TBARC_API_URL.indexOf('https://script.google.com/macros/s/') !== 0) {
-    notice.textContent = 'The secure submission service has not been connected yet. Please do not submit real personal information until TBARC has configured the backend.';
+    notice.textContent = 'The submission service is not configured. Please contact TBARC.';
     notice.style.display = 'block';
     return;
   }
@@ -157,7 +161,9 @@ form.addEventListener('submit', async function(event) {
   try {
     const photo = await fileAsPayload(document.getElementById('photo').files[0], 2 * 1024 * 1024);
     const cv = await fileAsPayload(document.getElementById('cv').files[0], 4 * 1024 * 1024);
+    const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const payload = {
+      requestId: requestId,
       fullName: document.getElementById('name').value,
       email: document.getElementById('email').value,
       age: document.getElementById('age').value,
@@ -184,39 +190,56 @@ form.addEventListener('submit', async function(event) {
     transport.action = TBARC_API_URL;
     transport.target = 'tbarcSubmitFrame';
     transport.style.display = 'none';
+
     const input = document.createElement('textarea');
     input.name = 'payload';
     input.value = JSON.stringify(payload);
     transport.appendChild(input);
     document.body.appendChild(transport);
 
-    window.addEventListener('message', function handler(e) {
-      if (e.source !== frame.contentWindow || !e.data || e.data.type !== 'TBARC_VOLUNTEER_RESPONSE') return;
-      window.removeEventListener('message', handler);
+    function handleResponse(e) {
+      if (!e.data || e.data.type !== 'TBARC_VOLUNTEER_RESPONSE' ||
+          !e.data.data || e.data.data.requestId !== requestId) return;
+
+      window.removeEventListener('message', handleResponse);
+      clearTimeout(submissionTimer);
       submitButton.disabled = false;
       submitButton.textContent = 'Submit Application →';
       transport.remove();
 
-      if (e.data.data && e.data.data.ok) {
-        success.innerHTML = '<strong>Application submitted successfully.</strong><br>Your reference number: <strong>' +
+      if (e.data.data.ok) {
+        success.innerHTML = '<strong>Application submitted successfully!</strong><br>Your reference number: <strong>' +
           String(e.data.data.applicationId || '').replace(/[<>&"]/g, '') +
           '</strong><br>Status: Pending Review. Please save your reference number.';
         success.style.display = 'block';
         form.reset();
         success.scrollIntoView({behavior:'smooth',block:'center'});
       } else {
-        notice.textContent = (e.data.data && e.data.data.message) || 'Submission failed. Please try again.';
+        notice.textContent = e.data.data.message || 'Submission failed. Please check your details and try again.';
         notice.style.display = 'block';
         notice.scrollIntoView({behavior:'smooth',block:'center'});
       }
-    }, {once:false});
+    }
+
+    window.addEventListener('message', handleResponse);
+    submissionTimer = setTimeout(function() {
+      window.removeEventListener('message', handleResponse);
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit Application →';
+      transport.remove();
+      notice.textContent = 'We could not confirm the server response. Your application may have been received. Please check the Applications sheet before submitting again.';
+      notice.style.display = 'block';
+      notice.scrollIntoView({behavior:'smooth',block:'center'});
+    }, 45000);
 
     transport.submit();
   } catch (err) {
+    clearTimeout(submissionTimer);
     submitButton.disabled = false;
     submitButton.textContent = 'Submit Application →';
     notice.textContent = err.message || 'Unable to prepare your application.';
     notice.style.display = 'block';
+    notice.scrollIntoView({behavior:'smooth',block:'center'});
   }
 });
 </script>
