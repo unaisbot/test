@@ -22,7 +22,25 @@
 <section class="page" id="page-applications"><div class="panel"><div class="panel-head"><div><h3>Volunteer applications</h3><div class="muted" style="font-size:12px">Review applications and make decisions</div></div><div class="toolbar"><input class="search" id="appSearch" placeholder="Search name, email or ID"><button class="btn btn-light" id="refreshBtn">↻ Refresh</button></div></div><div class="table-wrap"><table><thead><tr><th>Applicant</th><th>Application ID</th><th>Email</th><th>Location</th><th>Status</th><th>Action</th></tr></thead><tbody id="applicationRows"></tbody></table></div></div></section>
 <section class="page" id="page-volunteers"><div class="panel"><div class="panel-head"><div><h3>Volunteer records</h3><div class="muted" style="font-size:12px">Approved volunteer records and account status</div></div><input class="search" id="volSearch" placeholder="Search volunteers"></div><div class="table-wrap"><table><thead><tr><th>Volunteer</th><th>Volunteer ID</th><th>Role</th><th>Email</th><th>Location</th><th>Account</th></tr></thead><tbody id="volunteerRows"></tbody></table></div></div></section>
 <section class="page" id="page-directory"><div class="coming"><h3>Public directory management</h3><p>Directory publishing controls will be added in the next module. Only volunteers who have consented will be eligible for public display.</p></div></section>
-<section class="page" id="page-activities"><div class="coming"><h3>Activities & Attendance</h3><p>Activity creation, volunteer assignments and attendance tracking will be added in the next module.</p></div></section>
+<section class="page" id="page-activities">
+<div class="panel"><div class="panel-head"><div><h3 id="activityFormTitle">Create an activity</h3><div class="muted" style="font-size:12px">Create a programme, link it to an opportunity and manage participation.</div></div><button class="btn btn-light" id="activityReset" type="button">＋ New activity</button></div>
+<form id="activityForm"><input type="hidden" id="activityId">
+<div class="detail-grid">
+<label>Activity title<input class="search" style="width:100%;margin-top:6px" id="activityTitle" required maxlength="160"></label>
+<label>Linked opportunity<select class="search" style="width:100%;margin-top:6px" id="activityOpportunity"><option value="">No linked opportunity</option></select></label>
+<label>Location<input class="search" style="width:100%;margin-top:6px" id="activityLocation"></label>
+<label>Date<input class="search" style="width:100%;margin-top:6px" id="activityDate" type="date"></label>
+<label>Start time<input class="search" style="width:100%;margin-top:6px" id="activityStart" type="time"></label>
+<label>End time<input class="search" style="width:100%;margin-top:6px" id="activityEnd" type="time"></label>
+<label>Status<select class="search" style="width:100%;margin-top:6px" id="activityStatus"><option>Planned</option><option>Open</option><option>Completed</option><option>Cancelled</option></select></label>
+</div>
+<label style="display:block;margin-top:14px">Description<textarea id="activityDescription" rows="3" style="width:100%;border:1px solid #d7e1d7;border-radius:8px;padding:10px;margin-top:6px"></textarea></label>
+<div class="toolbar" style="margin-top:14px"><button class="btn" type="submit">Save activity</button></div></form></div>
+<div class="panel"><div class="panel-head"><div><h3>Activities</h3><div class="muted" style="font-size:12px">Select an activity to assign volunteers and record attendance.</div></div><button class="btn btn-light" id="activityRefresh" type="button">↻ Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Location</th><th>Status</th><th>Participants</th><th>Actions</th></tr></thead><tbody id="activityRows"><tr><td colspan="6" class="empty">Loading activities…</td></tr></tbody></table></div></div>
+<div class="panel"><div class="panel-head"><div><h3 id="assignmentHeading">Participants & attendance</h3><div class="muted" style="font-size:12px">Choose an activity above to manage its volunteers.</div></div></div>
+<div id="assignmentTools" style="display:none"><div class="toolbar" style="margin-bottom:12px"><select id="manualVolunteerSelect" class="search" multiple size="4" style="min-width:260px;min-height:95px"></select><button class="btn btn-light" id="assignSelected" type="button">Assign selected volunteers</button></div>
+<div class="table-wrap"><table><thead><tr><th>Volunteer</th><th>Source</th><th>Attendance</th><th>Hours</th><th>Remarks</th><th>Save</th></tr></thead><tbody id="assignmentRows"></tbody></table></div></div><div id="assignmentEmpty" class="empty">Select an activity to view participants.</div></div>
+</section>
 <section class="page" id="page-opportunities">
 <div class="panel"><div class="panel-head"><div><h3 id="oppFormHeading">Create an opportunity</h3><div class="muted" style="font-size:12px">Publish opportunities for approved volunteers.</div></div><button class="btn btn-light" id="oppResetBtn" type="button">＋ New</button></div>
 <form id="oppForm"><input type="hidden" id="oppId"><div class="detail-grid">
@@ -50,7 +68,7 @@ const today=new Date();$('today').textContent=today.toLocaleDateString(undefined
 function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notice(text,type=''){const n=$('notice');n.textContent=text;n.className='notice'+(type?' '+type:'');n.style.display='block';window.scrollTo({top:0,behavior:'smooth'});}
 function api(payload){return new Promise((resolve,reject)=>{if(transport)transport.remove();const id='adm_'+Date.now()+'_'+Math.random().toString(36).slice(2);payload.requestId=id;payload.token=token;const f=document.createElement('form');f.method='POST';f.action=API;f.target='tbarcAdminFrame';f.style.display='none';const t=document.createElement('textarea');t.name='payload';t.value=JSON.stringify(payload);f.appendChild(t);document.body.appendChild(f);transport=f;let done=false;const finish=(data)=>{if(done)return;done=true;clearTimeout(timer);window.removeEventListener('message',handler);f.remove();transport=null;if(data.ok)resolve(data);else reject(new Error(data.message||'Request failed.'));};const handler=e=>{if(e.data&&e.data.type==='TBARC_VOLUNTEER_RESPONSE'&&e.data.data&&e.data.data.requestId===id)finish(e.data.data);};window.addEventListener('message',handler);const timer=setTimeout(()=>{if(done)return;done=true;window.removeEventListener('message',handler);f.remove();transport=null;reject(new Error('The server did not respond. Please refresh and try again.'));},30000);f.submit();});}
-function go(page){if(page==='opportunities')loadOpportunities();document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page).classList.add('active');document.querySelectorAll('.nav button[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const label=document.querySelector('.nav button[data-page="'+page+'"]');$('topTitle').textContent=label?label.textContent.trim():page;$('sidebar').classList.remove('open');}
+function go(page){if(page==='opportunities')loadOpportunities();if(page==='activities')loadActivities();document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page).classList.add('active');document.querySelectorAll('.nav button[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const label=document.querySelector('.nav button[data-page="'+page+'"]');$('topTitle').textContent=label?label.textContent.trim():page;$('sidebar').classList.remove('open');}
 function statusPill(s){const cls=String(s).toLowerCase()==='approved'?'approved':String(s).toLowerCase()==='rejected'?'rejected':'';return '<span class="status '+cls+'">'+escapeHtml(s||'Pending')+'</span>';}
 function render(){const a=adminData.applications||[],v=adminData.volunteers||[],s=adminData.stats||{};$('statApplications').textContent=s.applications??a.length;$('statPending').textContent=s.pending??0;$('statApproved').textContent=s.approved??0;$('statVolunteers').textContent=s.volunteers??v.length;$('pendingNav').textContent=s.pending??0;$('adminEmail').innerHTML=escapeHtml(adminData.admin?.email||'Administrator')+'<small>Super Admin</small>';$('settingsEmail').textContent=adminData.admin?.email||'';
 const recent=[...a].reverse().slice(0,5);$('recentRows').innerHTML=recent.length?recent.map(x=>'<tr><td><strong>'+escapeHtml(x.Full_Name)+'</strong></td><td>'+escapeHtml(x.Application_ID)+'</td><td>'+escapeHtml(x.Submission_Date?new Date(x.Submission_Date).toLocaleDateString():'—')+'</td><td>'+statusPill(x.Application_Status)+'</td><td><button class="btn btn-light smallbtn" data-review="'+escapeHtml(x.Application_ID)+'">View</button></td></tr>').join(''):'<tr><td colspan="5" class="empty">No applications received yet.</td></tr>';
@@ -75,8 +93,70 @@ async function changeOppState(id,state){const o=oppData.opportunities.find(x=>x.
 function reviewOppResponse(id){selectedOppResponse=oppData.responses.find(x=>x.Response_ID===id);if(!selectedOppResponse)return;$('responseSummary').textContent=selectedOppResponse.Volunteer_Name+' · '+selectedOppResponse.Volunteer_Email+' · '+(selectedOppResponse.Message||'No message');$('responseStatus').value=selectedOppResponse.Status==='Submitted'?'Under Review':selectedOppResponse.Status;$('responseRemarks').value=selectedOppResponse.Admin_Remarks||'';$('responseModal').classList.add('show');}
 async function saveOppResponse(){if(!selectedOppResponse)return;try{const r=await api({action:'reviewOpportunityApplication',responseId:selectedOppResponse.Response_ID,status:$('responseStatus').value,remarks:$('responseRemarks').value});$('responseModal').classList.remove('show');notice(r.message,'ok');loadOpportunities();}catch(e){notice(e.message,'err');}}
 
+
+let activityData={activities:[],assignments:[],volunteers:[],opportunities:[]}, selectedActivityId='';
+async function loadActivities(){
+ try{
+  const r=await api({action:'adminActivitiesData'});
+  activityData={activities:r.activities||[],assignments:r.assignments||[],volunteers:r.volunteers||[],opportunities:r.opportunities||[]};
+  const sel=$('activityOpportunity'), old=sel.value;
+  sel.innerHTML='<option value="">No linked opportunity</option>'+activityData.opportunities.map(o=>'<option value="'+escapeHtml(o.Opportunity_ID)+'">'+escapeHtml(o.Title)+'</option>').join('');
+  if(old)sel.value=old;
+  renderActivities();
+ }catch(e){notice(e.message,'err');}
+}
+function renderActivities(){
+ const acts=activityData.activities||[], assigns=activityData.assignments||[];
+ $('activityRows').innerHTML=acts.length?acts.map(a=>{
+  const n=assigns.filter(x=>x.Activity_ID===a.Activity_ID).length;
+  return '<tr><td><strong>'+escapeHtml(a.Title)+'</strong></td><td>'+escapeHtml(a.Activity_Date||'—')+'</td><td>'+escapeHtml(a.Location||'—')+'</td><td>'+statusPill(a.Status)+'</td><td>'+n+'</td><td><div class="actions"><button class="btn btn-light smallbtn" data-act-edit="'+escapeHtml(a.Activity_ID)+'">Edit</button><button class="btn smallbtn" data-act-select="'+escapeHtml(a.Activity_ID)+'">Participants</button></div></td></tr>';
+ }).join(''):'<tr><td colspan="6" class="empty">No activities created yet.</td></tr>';
+ if(selectedActivityId)renderAssignments();
+}
+function resetActivityForm(){
+ $('activityForm').reset();$('activityId').value='';$('activityFormTitle').textContent='Create an activity';
+}
+function editActivity(id){
+ const a=activityData.activities.find(x=>x.Activity_ID===id);if(!a)return;
+ $('activityId').value=a.Activity_ID;$('activityTitle').value=a.Title||'';$('activityOpportunity').value=a.Opportunity_ID||'';
+ $('activityLocation').value=a.Location||'';$('activityDate').value=String(a.Activity_Date||'').slice(0,10);
+ $('activityStart').value=a.Start_Time||'';$('activityEnd').value=a.End_Time||'';
+ $('activityStatus').value=a.Status||'Planned';$('activityDescription').value=a.Description||'';
+ $('activityFormTitle').textContent='Edit activity';
+}
+async function submitActivity(e){
+ e.preventDefault();
+ try{const r=await api({action:'saveActivity',activityId:$('activityId').value,title:$('activityTitle').value,opportunityId:$('activityOpportunity').value,location:$('activityLocation').value,activityDate:$('activityDate').value,startTime:$('activityStart').value,endTime:$('activityEnd').value,status:$('activityStatus').value,description:$('activityDescription').value});notice(r.message,'ok');resetActivityForm();await loadActivities();}catch(err){notice(err.message,'err');}
+}
+function selectActivity(id){
+ selectedActivityId=id;$('assignmentTools').style.display='block';$('assignmentEmpty').style.display='none';
+ const a=activityData.activities.find(x=>x.Activity_ID===id);$('assignmentHeading').textContent='Participants: '+(a?.Title||'Activity');
+ const assigned=activityData.assignments.filter(x=>x.Activity_ID===id);
+ const assignedEmails=assigned.map(x=>String(x.Volunteer_Email||'').toLowerCase());
+ $('manualVolunteerSelect').innerHTML=activityData.volunteers.filter(v=>!assignedEmails.includes(String(v.Email||'').toLowerCase())).map(v=>'<option value="'+escapeHtml(v.Volunteer_ID)+'">'+escapeHtml(v.Full_Name)+' · '+escapeHtml(v.Volunteer_ID)+'</option>').join('');
+ $('assignmentRows').innerHTML=assigned.length?assigned.map(x=>'<tr><td><strong>'+escapeHtml(x.Volunteer_Name)+'</strong><br><span class="muted">'+escapeHtml(x.Volunteer_Email)+'</span></td><td>'+escapeHtml(x.Assignment_Source||'Manual')+'</td><td><select class="search" data-attendance="'+escapeHtml(x.Assignment_ID)+'"><option '+(x.Attendance_Status==='Not Marked'?'selected':'')+'>Not Marked</option><option '+(x.Attendance_Status==='Present'?'selected':'')+'>Present</option><option '+(x.Attendance_Status==='Absent'?'selected':'')+'>Absent</option><option '+(x.Attendance_Status==='Excused'?'selected':'')+'>Excused</option></select></td><td><input class="search" data-hours="'+escapeHtml(x.Assignment_ID)+'" type="number" min="0" max="24" step="0.5" value="'+escapeHtml(x.Hours||0)+'" style="min-width:75px"></td><td><input class="search" data-remarks="'+escapeHtml(x.Assignment_ID)+'" value="'+escapeHtml(x.Attendance_Remarks||'')+'" style="min-width:120px"></td><td><button class="btn btn-light smallbtn" data-att-save="'+escapeHtml(x.Assignment_ID)+'">Save</button></td></tr>').join(''):'<tr><td colspan="6" class="empty">No volunteers assigned yet.</td></tr>';
+}
+async function assignSelectedVolunteers(){
+ const ids=Array.from($('manualVolunteerSelect').selectedOptions).map(o=>o.value);
+ try{const r=await api({action:'assignActivityVolunteers',activityId:selectedActivityId,volunteerIds:ids});notice(r.message,'ok');await loadActivities();selectActivity(selectedActivityId);}catch(e){notice(e.message,'err');}
+}
+async function saveAttendance(id){
+ const status=document.querySelector('[data-attendance="'+id+'"]').value;
+ const hours=document.querySelector('[data-hours="'+id+'"]').value;
+ const remarks=document.querySelector('[data-remarks="'+id+'"]').value;
+ try{const r=await api({action:'markActivityAttendance',assignmentId:id,attendanceStatus:status,hours,remarks});notice(r.message,'ok');await loadActivities();selectActivity(selectedActivityId);}catch(e){notice(e.message,'err');}
+}
+
 async function loadData(){try{const r=await api({action:'adminData'});adminData=r;render();}catch(e){notice(e.message,'err');if(/session|sign in|permission/i.test(e.message)){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');setTimeout(()=>location.href='login.html',1200);}}}
 document.querySelectorAll('.nav button[data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));document.addEventListener('click',e=>{const b=e.target.closest('[data-review]');if(b)openReview(b.dataset.review);});$('refreshBtn').onclick=loadData;
+$('activityForm').addEventListener('submit',submitActivity);
+$('activityReset').onclick=resetActivityForm;$('activityRefresh').onclick=loadActivities;
+$('assignSelected').onclick=assignSelectedVolunteers;
+document.addEventListener('click',e=>{
+ const ed=e.target.closest('[data-act-edit]');if(ed)editActivity(ed.dataset.actEdit);
+ const se=e.target.closest('[data-act-select]');if(se)selectActivity(se.dataset.actSelect);
+ const sv=e.target.closest('[data-att-save]');if(sv)saveAttendance(sv.dataset.attSave);
+});
 $('oppForm').onsubmit=e=>{e.preventDefault();saveOpp('Published');};$('oppDraftBtn').onclick=()=>saveOpp('Draft');$('oppResetBtn').onclick=resetOppForm;$('oppRefreshBtn').onclick=loadOpportunities;
 $('responseCancel').onclick=()=>$('responseModal').classList.remove('show');$('responseSave').onclick=saveOppResponse;
 document.addEventListener('click',e=>{const a=e.target.closest('[data-opp-edit]');if(a)editOpp(a.dataset.oppEdit);const b=e.target.closest('[data-opp-state]');if(b)changeOppState(b.dataset.oppState,b.dataset.state);const c=e.target.closest('[data-opp-response]');if(c)reviewOppResponse(c.dataset.oppResponse);});
