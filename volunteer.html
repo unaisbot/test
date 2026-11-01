@@ -71,13 +71,9 @@ button,a{font:inherit}.layout{min-height:100vh;display:grid;grid-template-column
     <div class="box"><h2 class="section-title">Areas of interest</h2><p id="interestText" class="muted">—</p></div>
   </section>
 
-  <section class="panel" id="opportunitiesPanel">
-    <div class="box"><h2 class="section-title">Volunteer opportunities</h2><div class="empty"><b>New opportunities will appear here</b><p>When TBARC publishes a volunteering opportunity, you will be able to view its details and express interest from this section.</p></div></div>
-  </section>
+  <section class="panel" id="opportunitiesPanel"><div class="box"><h2 class="section-title">Volunteer opportunities</h2><p class="muted">Explore current opportunities and submit your interest.</p><div id="volOpportunityList"><div class="empty"><b>Loading opportunities…</b><p>Please wait.</p></div></div></div></section>
 
-  <section class="panel" id="activitiesPanel">
-    <div class="box"><h2 class="section-title">My activities</h2><div class="empty"><b>No activities recorded yet</b><p>Your registered programmes and participation history will appear here.</p></div></div>
-  </section>
+  <section class="panel" id="activitiesPanel"><div class="box"><h2 class="section-title">My opportunity applications</h2><p class="muted">Track the status of opportunities you have applied for.</p><div id="myOpportunityResponses"><div class="empty"><b>Loading your applications…</b><p>Please wait.</p></div></div></div><div class="box"><h2 class="section-title">My activities</h2><div class="empty"><b>Activity records are not available yet</b><p>TBARC programme participation and attendance history will appear here when that module is introduced.</p></div></div></section>
 
   <section class="panel" id="documentsPanel">
     <div class="box"><h2 class="section-title">Certificates & digital ID</h2><div class="empty"><b>Your documents will appear here</b><p>Certificates, volunteer ID cards and other documents issued by TBARC will be listed here when connected to your account.</p></div></div>
@@ -116,10 +112,25 @@ function request(payload,onSuccess){
   timer=setTimeout(()=>{if(finished)return;finished=true;window.removeEventListener('message',handler);transport.remove();activeTransport=null;showNotice('The account service did not respond. Please refresh or sign in again.');},30000);
   transport.submit();
 }
+
+let opportunityCache=[],responseCache=[];
+function renderOpportunityData(){
+ const host=$('volOpportunityList');
+ host.innerHTML=opportunityCache.length?opportunityCache.map(o=>{
+  const applied=responseCache.some(r=>r.Opportunity_ID===o.Opportunity_ID&&r.Status!=='Withdrawn');
+  return '<article class="box" style="box-shadow:none;margin:12px 0"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0;color:var(--dark)">'+escapeHtml(o.Title)+'</h3><span class="pill">'+escapeHtml(o.Category||'Opportunity')+'</span></div><p class="muted">'+escapeHtml(o.Location||'Location not specified')+' · '+escapeHtml(o.Start_Date||'Date to be announced')+(o.End_Date?' – '+escapeHtml(o.End_Date):'')+'</p><p style="white-space:pre-wrap">'+escapeHtml(o.Description||'')+'</p>'+(o.Eligibility?'<p class="muted"><b>Eligibility:</b> '+escapeHtml(o.Eligibility)+'</p>':'')+'<p class="muted">Vacancies: '+escapeHtml(o.Vacancies||'Not specified')+'</p>'+(applied?'<span class="pill">Interest submitted</span>':'<button class="btn apply-opportunity" data-apply="'+escapeHtml(o.Opportunity_ID)+'">Express interest</button>')+'</article>';
+ }).join(''):'<div class="empty"><b>No open opportunities at the moment</b><p>New opportunities published by TBARC will appear here.</p></div>';
+ const byId={};opportunityCache.forEach(o=>byId[o.Opportunity_ID]=o);
+ $('myOpportunityResponses').innerHTML=responseCache.length?responseCache.map(r=>'<div class="profile-item" style="margin:9px 0"><strong>'+escapeHtml(byId[r.Opportunity_ID]?.Title||r.Opportunity_ID)+'</strong><small>Applied: '+escapeHtml(String(r.Applied_At||'').slice(0,10))+'</small><p class="muted">Status: <b>'+escapeHtml(r.Status||'Submitted')+'</b></p>'+(r.Admin_Remarks?'<p class="muted">TBARC remarks: '+escapeHtml(r.Admin_Remarks)+'</p>':'')+'</div>').join(''):'<div class="empty"><b>You have not applied for an opportunity yet</b><p>Your submitted applications and decisions will appear here.</p></div>';
+}
+function loadVolunteerOpportunities(){request({action:'volunteerOpportunitiesData',token},data=>{opportunityCache=data.opportunities||[];responseCache=data.responses||[];renderOpportunityData();});}
+function applyVolunteerOpportunity(id){const message=window.prompt('Add a short message for the TBARC team (optional):')||'';request({action:'applyOpportunity',token,opportunityId:id,message},data=>{showNotice(data.message);loadVolunteerOpportunities();});}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-apply]');if(b)applyVolunteerOpportunity(b.dataset.apply);});
+
 function logout(){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');sessionStorage.removeItem('tbarc_name');location.href='login.html';}
 $('logoutBtn').addEventListener('click',logout);
 if(!token||role!=='Volunteer'){logout();}
-else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();});}
+else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();loadVolunteerOpportunities();});}
 
 function renderDashboard(){
  const v=volunteer,p=v.profile||{},name=v.fullName||p.fullName||'Volunteer';
@@ -141,7 +152,7 @@ const pageInfo={
  overview:['Overview','Your TBARC volunteering space'],
  profile:['My Profile','Your approved application details'],
  opportunities:['Opportunities','Explore ways to contribute'],
- activities:['My Activities','Your volunteering participation'],
+ activities:['My Activities','Track your opportunity applications and participation'],
  documents:['Certificates & ID','Your TBARC documents'],
  announcements:['Announcements','News and updates from TBARC'],
  settings:['Account Settings','Manage your portal access']
