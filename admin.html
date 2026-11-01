@@ -53,7 +53,16 @@
 <div class="toolbar" style="margin-top:14px"><button class="btn btn-light" type="button" id="oppDraftBtn">Save draft</button><button class="btn" type="submit">Publish opportunity</button></div></form></div>
 <div class="panel"><div class="panel-head"><h3>Opportunities</h3><button class="btn btn-light" id="oppRefreshBtn" type="button">↻ Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Opportunity</th><th>Category</th><th>Dates</th><th>Status</th><th>Responses</th><th>Actions</th></tr></thead><tbody id="oppRows"></tbody></table></div></div>
 <div class="panel"><div class="panel-head"><h3>Volunteer responses</h3></div><div class="table-wrap"><table><thead><tr><th>Volunteer</th><th>Opportunity</th><th>Message</th><th>Status</th><th>Review</th></tr></thead><tbody id="oppResponseRows"></tbody></table></div></div></section>
-<section class="page" id="page-announcements"><div class="coming"><h3>Announcements</h3><p>Portal announcements and volunteer notifications will be added in a later update.</p></div></section>
+<section class="page" id="page-announcements">
+<div class="panel"><div class="panel-head"><div><h3 id="announcementFormTitle">Create announcement</h3><div class="muted" style="font-size:12px">Publish notices that appear in active volunteers' dashboards.</div></div><button class="btn btn-light" id="announcementReset" type="button">＋ New announcement</button></div>
+<form id="announcementForm"><input type="hidden" id="announcementId"><div class="detail-grid">
+<label>Announcement title<input class="search" id="announcementTitle" style="width:100%;margin-top:6px" maxlength="180" required placeholder="Enter a clear title"></label>
+<label>Category<select class="search" id="announcementCategory" style="width:100%;margin-top:6px"><option>General</option><option>Important</option><option>Opportunity</option><option>Activity</option><option>Event</option></select></label>
+<label>Audience<select class="search" id="announcementAudience" style="width:100%;margin-top:6px"><option>All Volunteers</option></select></label></div>
+<label style="display:block;margin-top:14px">Message<textarea id="announcementMessage" rows="5" maxlength="6000" required style="width:100%;border:1px solid #d7e1d7;border-radius:8px;padding:10px;margin-top:6px" placeholder="Write the announcement for volunteers..."></textarea></label>
+<div class="toolbar" style="margin-top:14px"><button class="btn btn-light" type="button" id="announcementDraft">Save draft</button><button class="btn" type="submit">Publish announcement</button></div></form></div>
+<div class="panel"><div class="panel-head"><div><h3>Announcements</h3><div class="muted" style="font-size:12px">Manage published notices and saved drafts.</div></div><button class="btn btn-light" id="announcementRefresh" type="button">↻ Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Title</th><th>Category</th><th>Published / Updated</th><th>Status</th><th>Actions</th></tr></thead><tbody id="announcementRows"><tr><td colspan="5" class="empty">Loading announcements…</td></tr></tbody></table></div></div>
+</section>
 <section class="page" id="page-certificates"><div class="coming"><h3>Certificates & ID Cards</h3><p>Volunteer ID and certificate integration will be added after the core volunteer management workflow is complete.</p></div></section>
 <section class="page" id="page-reports"><div class="coming"><h3>Reports</h3><p>Volunteer statistics and downloadable reports will be added in a later update.</p></div></section>
 <section class="page" id="page-settings"><div class="panel"><h3>Administrator account</h3><p id="settingsEmail" class="muted"></p><p>Signed in with Super Admin access. Keep your account credentials private.</p></div></section>
@@ -68,7 +77,7 @@ const today=new Date();$('today').textContent=today.toLocaleDateString(undefined
 function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notice(text,type=''){const n=$('notice');n.textContent=text;n.className='notice'+(type?' '+type:'');n.style.display='block';window.scrollTo({top:0,behavior:'smooth'});}
 function api(payload){return new Promise((resolve,reject)=>{if(transport)transport.remove();const id='adm_'+Date.now()+'_'+Math.random().toString(36).slice(2);payload.requestId=id;payload.token=token;const f=document.createElement('form');f.method='POST';f.action=API;f.target='tbarcAdminFrame';f.style.display='none';const t=document.createElement('textarea');t.name='payload';t.value=JSON.stringify(payload);f.appendChild(t);document.body.appendChild(f);transport=f;let done=false;const finish=(data)=>{if(done)return;done=true;clearTimeout(timer);window.removeEventListener('message',handler);f.remove();transport=null;if(data.ok)resolve(data);else reject(new Error(data.message||'Request failed.'));};const handler=e=>{if(e.data&&e.data.type==='TBARC_VOLUNTEER_RESPONSE'&&e.data.data&&e.data.data.requestId===id)finish(e.data.data);};window.addEventListener('message',handler);const timer=setTimeout(()=>{if(done)return;done=true;window.removeEventListener('message',handler);f.remove();transport=null;reject(new Error('The server did not respond. Please refresh and try again.'));},30000);f.submit();});}
-function go(page){if(page==='opportunities')loadOpportunities();if(page==='activities')loadActivities();document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page).classList.add('active');document.querySelectorAll('.nav button[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const label=document.querySelector('.nav button[data-page="'+page+'"]');$('topTitle').textContent=label?label.textContent.trim():page;$('sidebar').classList.remove('open');}
+function go(page){if(page==='opportunities')loadOpportunities();if(page==='activities')loadActivities();if(page==='announcements')loadAnnouncements();document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page).classList.add('active');document.querySelectorAll('.nav button[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const label=document.querySelector('.nav button[data-page="'+page+'"]');$('topTitle').textContent=label?label.textContent.trim():page;$('sidebar').classList.remove('open');}
 function statusPill(s){const cls=String(s).toLowerCase()==='approved'?'approved':String(s).toLowerCase()==='rejected'?'rejected':'';return '<span class="status '+cls+'">'+escapeHtml(s||'Pending')+'</span>';}
 function render(){const a=adminData.applications||[],v=adminData.volunteers||[],s=adminData.stats||{};$('statApplications').textContent=s.applications??a.length;$('statPending').textContent=s.pending??0;$('statApproved').textContent=s.approved??0;$('statVolunteers').textContent=s.volunteers??v.length;$('pendingNav').textContent=s.pending??0;$('adminEmail').innerHTML=escapeHtml(adminData.admin?.email||'Administrator')+'<small>Super Admin</small>';$('settingsEmail').textContent=adminData.admin?.email||'';
 const recent=[...a].reverse().slice(0,5);$('recentRows').innerHTML=recent.length?recent.map(x=>'<tr><td><strong>'+escapeHtml(x.Full_Name)+'</strong></td><td>'+escapeHtml(x.Application_ID)+'</td><td>'+escapeHtml(x.Submission_Date?new Date(x.Submission_Date).toLocaleDateString():'—')+'</td><td>'+statusPill(x.Application_Status)+'</td><td><button class="btn btn-light smallbtn" data-review="'+escapeHtml(x.Application_ID)+'">View</button></td></tr>').join(''):'<tr><td colspan="5" class="empty">No applications received yet.</td></tr>';
@@ -147,9 +156,46 @@ async function saveAttendance(id){
  try{const r=await api({action:'markActivityAttendance',assignmentId:id,attendanceStatus:status,hours,remarks});notice(r.message,'ok');await loadActivities();selectActivity(selectedActivityId);}catch(e){notice(e.message,'err');}
 }
 
+
+let announcementData=[];
+async function loadAnnouncements(){
+ try{const r=await api({action:'adminAnnouncementsData'});announcementData=r.announcements||[];renderAnnouncements();}
+ catch(e){notice(e.message,'err');}
+}
+function renderAnnouncements(){
+ $('announcementRows').innerHTML=announcementData.length?announcementData.map(a=>'<tr><td><strong>'+escapeHtml(a.Title)+'</strong><br><span class="muted">'+escapeHtml(a.Audience||'All Volunteers')+'</span></td><td>'+escapeHtml(a.Category||'General')+'</td><td>'+escapeHtml(a.Publish_Date||a.Updated_At||'—')+'</td><td>'+statusPill(a.Status)+'</td><td><div class="actions"><button class="btn btn-light smallbtn" data-ann-edit="'+escapeHtml(a.Announcement_ID)+'">Edit</button>'+(a.Status==='Published'?'<button class="btn btn-light smallbtn" data-ann-status="'+escapeHtml(a.Announcement_ID)+'" data-ann-new="Archived">Archive</button>':a.Status==='Archived'?'':'<button class="btn smallbtn" data-ann-status="'+escapeHtml(a.Announcement_ID)+'" data-ann-new="Published">Publish</button>')+'</div></td></tr>').join(''):'<tr><td colspan="5" class="empty">No announcements created yet.</td></tr>';
+}
+function resetAnnouncementForm(){
+ $('announcementForm').reset();$('announcementId').value='';$('announcementFormTitle').textContent='Create announcement';
+}
+function editAnnouncement(id){
+ const a=announcementData.find(x=>x.Announcement_ID===id);if(!a)return;
+ $('announcementId').value=a.Announcement_ID;$('announcementTitle').value=a.Title||'';
+ $('announcementCategory').value=a.Category||'General';$('announcementAudience').value=a.Audience||'All Volunteers';
+ $('announcementMessage').value=a.Message||'';$('announcementFormTitle').textContent='Edit announcement';
+}
+async function submitAnnouncement(status){
+ const payload={action:'saveAnnouncement',announcementId:$('announcementId').value,title:$('announcementTitle').value,message:$('announcementMessage').value,category:$('announcementCategory').value,status};
+ try{const r=await api(payload);notice(r.message,'ok');resetAnnouncementForm();await loadAnnouncements();}
+ catch(e){notice(e.message,'err');}
+}
+async function changeAnnouncementStatus(id,status){
+ const a=announcementData.find(x=>x.Announcement_ID===id);if(!a)return;
+ try{const r=await api({action:'saveAnnouncement',announcementId:id,title:a.Title,message:a.Message,category:a.Category,status});notice(r.message,'ok');await loadAnnouncements();}
+ catch(e){notice(e.message,'err');}
+}
+
 async function loadData(){try{const r=await api({action:'adminData'});adminData=r;render();}catch(e){notice(e.message,'err');if(/session|sign in|permission/i.test(e.message)){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');setTimeout(()=>location.href='login.html',1200);}}}
 document.querySelectorAll('.nav button[data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));document.addEventListener('click',e=>{const b=e.target.closest('[data-review]');if(b)openReview(b.dataset.review);});$('refreshBtn').onclick=loadData;
 $('activityForm').addEventListener('submit',submitActivity);
+$('announcementForm').addEventListener('submit',e=>{e.preventDefault();submitAnnouncement('Published');});
+$('announcementDraft').onclick=()=>submitAnnouncement('Draft');
+$('announcementReset').onclick=resetAnnouncementForm;
+$('announcementRefresh').onclick=loadAnnouncements;
+document.addEventListener('click',e=>{
+ const ed=e.target.closest('[data-ann-edit]');if(ed)editAnnouncement(ed.dataset.annEdit);
+ const st=e.target.closest('[data-ann-status]');if(st)changeAnnouncementStatus(st.dataset.annStatus,st.dataset.annNew);
+});
 $('activityReset').onclick=resetActivityForm;$('activityRefresh').onclick=loadActivities;
 $('assignSelected').onclick=assignSelectedVolunteers;
 document.addEventListener('click',e=>{
