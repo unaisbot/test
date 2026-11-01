@@ -129,11 +129,17 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-apply]');i
 
 
 let myActivitiesCache=[];
+function formatActivityDate(value){
+ if(!value)return 'Date to be announced';
+ const d=new Date(value);
+ if(Number.isNaN(d.getTime()))return escapeHtml(String(value));
+ return d.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+}
 function renderMyActivities(){
  const host=$('myAssignedActivities');
  host.innerHTML=myActivitiesCache.length?myActivitiesCache.map(x=>{
   const a=x.activity||{};
-  return '<div class="profile-item" style="margin:10px 0"><strong>'+escapeHtml(a.Title||'Activity')+'</strong><small>'+escapeHtml(a.Activity_Date||'Date to be announced')+' · '+escapeHtml(a.Location||'Location not specified')+'</small><p class="muted" style="margin:6px 0">Status: <b>'+escapeHtml(a.Status||'Planned')+'</b> · Attendance: <b>'+escapeHtml(x.attendanceStatus||'Not Marked')+'</b></p><p class="muted" style="margin:4px 0">Participation hours: <b>'+escapeHtml(x.hours||0)+'</b> · Assigned via: '+escapeHtml(x.assignmentSource||'TBARC')+'</p>'+(x.remarks?'<p class="muted">Remarks: '+escapeHtml(x.remarks)+'</p>':'')+'</div>';
+  return '<div class="profile-item" style="margin:10px 0"><strong>'+escapeHtml(a.Title||'Activity')+'</strong><small>'+formatActivityDate(a.Activity_Date)+' · '+escapeHtml(a.Location||'Location not specified')+'</small><p class="muted" style="margin:6px 0">Status: <b>'+escapeHtml(a.Status||'Planned')+'</b> · Attendance: <b>'+escapeHtml(x.attendanceStatus||'Not Marked')+'</b></p><p class="muted" style="margin:4px 0">Participation hours: <b>'+escapeHtml(x.hours||0)+'</b> · Assigned via: '+escapeHtml(x.assignmentSource||'TBARC')+'</p>'+(x.remarks?'<p class="muted">Remarks: '+escapeHtml(x.remarks)+'</p>':'')+'</div>';
  }).join(''):'<div class="empty"><b>No activities assigned yet</b><p>When TBARC assigns you to an activity, it will appear here.</p></div>';
 }
 function loadMyActivities(){
