@@ -80,8 +80,8 @@ button,a{font:inherit}.layout{min-height:100vh;display:grid;grid-template-column
   </section>
 
   <section class="panel" id="announcementsPanel">
-    <div class="box"><h2 class="section-title">Announcements</h2><div class="empty"><b>No announcements yet</b><p>Official notices and updates from TBARC will be displayed here.</p></div></div>
-  </section>
+ <div class="box"><h2 class="section-title">TBARC announcements</h2><p class="muted">Important notices, opportunities and programme updates from TBARC.</p><div id="volunteerAnnouncements"><div class="empty"><b>Loading announcements…</b><p>Please wait.</p></div></div></div>
+</section>
 
   <section class="panel" id="settingsPanel">
     <div class="box"><h2 class="section-title">Account settings</h2><p class="muted">Your account is secured by your email address and password.</p><div class="profile-grid"><div class="profile-item"><small>Registered email</small><strong id="settingEmail">—</strong></div><div class="profile-item"><small>Account status</small><strong id="settingStatus">Active</strong></div></div><p class="muted" style="margin-top:16px">To change your password, sign out and use “Forgot password?” on the login page.</p><a class="link" href="login.html">Open login and password options →</a></div>
@@ -146,10 +146,20 @@ function loadMyActivities(){
  request({action:'volunteerActivitiesData',token},data=>{myActivitiesCache=data.activities||[];renderMyActivities();});
 }
 
+
+let volunteerAnnouncementCache=[];
+function renderVolunteerAnnouncements(){
+ const host=$('volunteerAnnouncements');
+ host.innerHTML=volunteerAnnouncementCache.length?volunteerAnnouncementCache.map(a=>'<article class="profile-item" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>'+escapeHtml(a.Title||'Announcement')+'</strong><span class="pill">'+escapeHtml(a.Category||'General')+'</span></div><small>'+escapeHtml(a.Publish_Date||a.Updated_At||'')+'</small><p style="white-space:pre-wrap;margin:10px 0 0">'+escapeHtml(a.Message||'')+'</p></article>').join(''):'<div class="empty"><b>No announcements yet</b><p>New notices from TBARC will appear here when published.</p></div>';
+}
+function loadVolunteerAnnouncements(){
+ request({action:'volunteerAnnouncementsData',token},data=>{volunteerAnnouncementCache=data.announcements||[];renderVolunteerAnnouncements();});
+}
+
 function logout(){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');sessionStorage.removeItem('tbarc_name');location.href='login.html';}
 $('logoutBtn').addEventListener('click',logout);
 if(!token||role!=='Volunteer'){logout();}
-else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();loadVolunteerOpportunities();loadMyActivities();});}
+else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();loadVolunteerOpportunities();loadMyActivities();loadVolunteerAnnouncements();});}
 
 function renderDashboard(){
  const v=volunteer,p=v.profile||{},name=v.fullName||p.fullName||'Volunteer';
