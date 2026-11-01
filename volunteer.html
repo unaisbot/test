@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#075333">
+<meta name="description" content="TBARC India Volunteer Dashboard">
+<title>Volunteer Dashboard | TBARC India</title>
+<link rel="icon" type="image/png" href="images/favicon.png">
+<style>
+:root{--green:#075333;--dark:#043b25;--page:#f4f8f4;--white:#fff;--line:#e1e9e1;--muted:#66716a;--shadow:0 8px 28px rgba(4,59,37,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:#202923;font:15px/1.6 Arial,Helvetica,sans-serif}
+button,a{font:inherit}.layout{min-height:100vh;display:grid;grid-template-columns:260px minmax(0,1fr)}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;border-bottom:1px solid var(--line)}.brand img{width:44px;height:44px;object-fit:contain}.brand strong{color:var(--dark);font-size:15px;line-height:1.2}.brand small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:4px}
+.nav{display:grid;gap:6px}.nav button{border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;color:#344139;font-weight:700;font-size:13px;cursor:pointer}.nav button:hover,.nav button.active{background:#edf6ef;color:var(--green)}.nav button span{display:inline-block;width:27px;font-size:16px}
+.side-bottom{margin-top:auto;display:grid;gap:8px}.user-mini{border-top:1px solid var(--line);padding:16px 8px 8px;display:flex;align-items:center;gap:10px}.avatar{width:38px;height:38px;border-radius:50%;background:#e6f1e8;color:var(--green);display:grid;place-items:center;font-weight:800;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}.user-mini strong{display:block;font-size:12px}.user-mini small{color:var(--muted);font-size:11px}
+.logout{border:1px solid var(--line);background:#fff;color:var(--green);padding:10px 12px;border-radius:8px;font-weight:700;cursor:pointer;text-align:left}
+.main{min-width:0;padding:28px clamp(16px,3vw,42px) 45px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}.topbar h1{margin:0;color:var(--dark);font-size:27px}.topbar p{margin:3px 0 0;color:var(--muted);font-size:13px}.top-actions{display:flex;gap:9px;align-items:center}.pill{background:#e8f4eb;color:#17613b;border-radius:30px;padding:7px 12px;font-size:11px;font-weight:800}
+.panel{display:none}.panel.active{display:block}.welcome{background:linear-gradient(115deg,#075333,#0b6842);color:#fff;border-radius:16px;padding:27px 28px;margin-bottom:18px;box-shadow:var(--shadow)}.welcome small{opacity:.8;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:10px}.welcome h2{font-size:25px;margin:5px 0}.welcome p{margin:0;opacity:.88;font-size:13px}.welcome .ref{margin-top:17px;font-size:12px;opacity:.9}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}.card,.box{background:#fff;border:1px solid var(--line);border-radius:13px;padding:18px;box-shadow:var(--shadow)}.card small{color:var(--muted);font-size:11px;font-weight:700}.card strong{display:block;color:var(--dark);font-size:17px;margin-top:7px;overflow-wrap:anywhere}.section-title{font-size:17px;color:var(--dark);margin:0 0 12px}.box{margin-bottom:16px}.muted{color:var(--muted);font-size:13px}.quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.quick{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fcfefb}.quick b{display:block;color:var(--dark);font-size:13px}.quick small{color:var(--muted);font-size:11px}
+.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.profile-item{padding:12px;border:1px solid var(--line);border-radius:9px;min-width:0}.profile-item small{display:block;color:var(--muted);font-size:11px;font-weight:700}.profile-item strong{display:block;font-size:13px;overflow-wrap:anywhere;margin-top:4px}
+.empty{border:1px dashed #cbd9cd;background:#fbfdfb;border-radius:12px;padding:25px;text-align:center}.empty b{display:block;color:var(--dark);margin-bottom:5px}.empty p{color:var(--muted);font-size:13px;margin:0}
+.notice{display:none;background:#fff5e8;border:1px solid #f0d5ae;color:#6b471c;padding:13px 15px;border-radius:9px;margin-bottom:16px;font-size:13px}.notice.show{display:block}
+.mobile-head{display:none}.link{color:var(--green);font-weight:700;text-decoration:none}.footer{color:var(--muted);font-size:11px;text-align:center;margin-top:28px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{position:static;padding:12px 14px;border-right:0;border-bottom:1px solid var(--line);gap:10px}.brand{padding:0 5px 10px}.brand img{width:35px;height:35px}.nav{display:flex;overflow-x:auto;padding-bottom:3px}.nav button{white-space:nowrap;padding:9px 11px}.nav button span{width:20px}.side-bottom{display:flex;align-items:center;justify-content:space-between}.user-mini{border:0;padding:4px}.logout{padding:8px 10px}.main{padding:20px 14px 35px}.topbar h1{font-size:23px}}
+@media(max-width:560px){.cards{grid-template-columns:1fr 1fr}.cards .card:last-child{grid-column:1/-1}.quick-grid{grid-template-columns:1fr}.profile-grid{grid-template-columns:1fr}.welcome{padding:22px}.topbar{align-items:flex-start}.pill{display:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="brand"><img src="images/logo.png" alt="TBARC"><div><strong>TBARC India</strong><small>Volunteer Portal</small></div></div>
+  <nav class="nav" aria-label="Volunteer navigation">
+    <button class="active" data-page="overview"><span>▦</span>Overview</button>
+    <button data-page="profile"><span>♙</span>My Profile</button>
+    <button data-page="opportunities"><span>✳</span>Opportunities</button>
+    <button data-page="activities"><span>✓</span>My Activities</button>
+    <button data-page="documents"><span>▣</span>Certificates & ID</button>
+    <button data-page="announcements"><span>◉</span>Announcements</button>
+    <button data-page="settings"><span>⚙</span>Account Settings</button>
+  </nav>
+  <div class="side-bottom">
+    <div class="user-mini"><div class="avatar" id="avatar">TB</div><div><strong id="sideName">Volunteer</strong><small id="sideId">Loading account…</small></div></div>
+    <button class="logout" id="logoutBtn">↪ Sign out</button>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar"><div><h1 id="pageHeading">Overview</h1><p id="pageSub">Your TBARC volunteering space</p></div><div class="top-actions"><span class="pill">● Volunteer account</span></div></div>
+  <div class="notice" id="notice" role="status"></div>
+
+  <section class="panel active" id="overviewPanel">
+    <div class="welcome"><small>TBARC Volunteer Community</small><h2 id="welcomeName">Welcome!</h2><p>Thank you for contributing your time and skills to biodiversity conservation.</p><div class="ref" id="welcomeRef"></div></div>
+    <div class="cards">
+      <div class="card"><small>Volunteer ID</small><strong id="statId">—</strong></div>
+      <div class="card"><small>Membership status</small><strong id="statStatus">Active</strong></div>
+      <div class="card"><small>Volunteer role</small><strong id="statRole">Volunteer</strong></div>
+    </div>
+    <div class="box"><h2 class="section-title">Your volunteer workspace</h2><div class="quick-grid">
+      <div class="quick"><b>My profile</b><small>Review your submitted information and interests.</small></div>
+      <div class="quick"><b>Opportunities</b><small>Discover activities shared by the TBARC team.</small></div>
+      <div class="quick"><b>Certificates & ID</b><small>Access documents issued to your account.</small></div>
+    </div></div>
+    <div class="box"><h2 class="section-title">Latest announcements</h2><div class="empty"><b>No announcements yet</b><p>TBARC updates will appear here when published.</p></div></div>
+  </section>
+
+  <section class="panel" id="profilePanel">
+    <div class="box"><h2 class="section-title">My profile</h2><p class="muted">This information comes from your approved volunteer application. Contact TBARC if any details need correction.</p><div class="profile-grid" id="profileGrid"></div></div>
+    <div class="box"><h2 class="section-title">Areas of interest</h2><p id="interestText" class="muted">—</p></div>
+  </section>
+
+  <section class="panel" id="opportunitiesPanel">
+    <div class="box"><h2 class="section-title">Volunteer opportunities</h2><div class="empty"><b>New opportunities will appear here</b><p>When TBARC publishes a volunteering opportunity, you will be able to view its details and express interest from this section.</p></div></div>
+  </section>
+
+  <section class="panel" id="activitiesPanel">
+    <div class="box"><h2 class="section-title">My activities</h2><div class="empty"><b>No activities recorded yet</b><p>Your registered programmes and participation history will appear here.</p></div></div>
+  </section>
+
+  <section class="panel" id="documentsPanel">
+    <div class="box"><h2 class="section-title">Certificates & digital ID</h2><div class="empty"><b>Your documents will appear here</b><p>Certificates, volunteer ID cards and other documents issued by TBARC will be listed here when connected to your account.</p></div></div>
+  </section>
+
+  <section class="panel" id="announcementsPanel">
+    <div class="box"><h2 class="section-title">Announcements</h2><div class="empty"><b>No announcements yet</b><p>Official notices and updates from TBARC will be displayed here.</p></div></div>
+  </section>
+
+  <section class="panel" id="settingsPanel">
+    <div class="box"><h2 class="section-title">Account settings</h2><p class="muted">Your account is secured by your email address and password.</p><div class="profile-grid"><div class="profile-item"><small>Registered email</small><strong id="settingEmail">—</strong></div><div class="profile-item"><small>Account status</small><strong id="settingStatus">Active</strong></div></div><p class="muted" style="margin-top:16px">To change your password, sign out and use “Forgot password?” on the login page.</p><a class="link" href="login.html">Open login and password options →</a></div>
+  </section>
+  <div class="footer">© 2026 Tropical Biodiversity Action and Research Centre (TBARC India)</div>
+</main>
+</div>
+<iframe name="tbarcVolunteerFrame" id="tbarcVolunteerFrame" title="Volunteer account service" style="display:none"></iframe>
+<script>
+const API='https://script.google.com/macros/s/AKfycbzMsI5WagkDKMjmS34afCif84fl67c72U9BVMh3RSdxyGNjo-tvq5gAAC06xZhvlmNJLA/exec';
+const $=id=>document.getElementById(id);
+const token=sessionStorage.getItem('tbarc_session');
+const role=sessionStorage.getItem('tbarc_role');
+let volunteer=null, activeTransport=null, timer=null;
+
+function showNotice(text){$('notice').textContent=text;$('notice').classList.add('show');}
+function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(name){return String(name||'TBARC').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();}
+function request(payload,onSuccess){
+  if(activeTransport)activeTransport.remove();
+  const requestId='vol_'+Date.now()+'_'+Math.random().toString(36).slice(2);payload.requestId=requestId;
+  const transport=document.createElement('form');transport.method='POST';transport.action=API;transport.target='tbarcVolunteerFrame';transport.style.display='none';
+  const input=document.createElement('textarea');input.name='payload';input.value=JSON.stringify(payload);transport.appendChild(input);document.body.appendChild(transport);activeTransport=transport;
+  let finished=false;
+  function finish(data){if(finished)return;finished=true;clearTimeout(timer);window.removeEventListener('message',handler);transport.remove();activeTransport=null;if(data.ok)onSuccess(data);else showNotice(data.message||'Unable to load your volunteer account.');}
+  function handler(e){if(!e.data||e.data.type!=='TBARC_VOLUNTEER_RESPONSE'||!e.data.data||e.data.data.requestId!==requestId)return;finish(e.data.data);}
+  window.addEventListener('message',handler);
+  timer=setTimeout(()=>{if(finished)return;finished=true;window.removeEventListener('message',handler);transport.remove();activeTransport=null;showNotice('The account service did not respond. Please refresh or sign in again.');},30000);
+  transport.submit();
+}
+function logout(){sessionStorage.removeItem('tbarc_session');sessionStorage.removeItem('tbarc_role');sessionStorage.removeItem('tbarc_name');location.href='login.html';}
+$('logoutBtn').addEventListener('click',logout);
+if(!token||role!=='Volunteer'){logout();}
+else{request({action:'volunteerData',token},data=>{volunteer=data.volunteer;renderDashboard();});}
+
+function renderDashboard(){
+ const v=volunteer,p=v.profile||{},name=v.fullName||p.fullName||'Volunteer';
+ $('welcomeName').textContent='Welcome, '+name+'!';
+ $('welcomeRef').textContent='Application reference: '+(v.applicationId||'—');
+ $('statId').textContent=v.volunteerId||'Pending';
+ $('statStatus').textContent=v.accountStatus||'Active';
+ $('statRole').textContent=v.role||'Volunteer';
+ $('sideName').textContent=name;
+ $('sideId').textContent=v.volunteerId||'TBARC Volunteer';
+ $('settingEmail').textContent=p.email||'—';
+ $('settingStatus').textContent=v.accountStatus||'Active';
+ $('avatar').innerHTML=v.photoUrl?'<img src="'+escapeHtml(v.photoUrl)+'" alt="Volunteer photograph">':escapeHtml(initials(name));
+ const fields=[['Full name',p.fullName],['Email address',p.email],['WhatsApp number',p.whatsapp],['Age',p.age],['Gender',p.gender],['Location',p.location],['Educational qualification',p.qualification],['Field / profession',p.field],['Current status',p.currentStatus],['Instagram',p.instagram],['Facebook',p.facebook],['LinkedIn',p.linkedin],['Other link',p.otherLink]];
+ $('profileGrid').innerHTML=fields.map(([label,value])=>'<div class="profile-item"><small>'+escapeHtml(label)+'</small><strong>'+escapeHtml(value||'Not provided')+'</strong></div>').join('');
+ $('interestText').textContent=p.interests||'No interests listed.';
+}
+const pageInfo={
+ overview:['Overview','Your TBARC volunteering space'],
+ profile:['My Profile','Your approved application details'],
+ opportunities:['Opportunities','Explore ways to contribute'],
+ activities:['My Activities','Your volunteering participation'],
+ documents:['Certificates & ID','Your TBARC documents'],
+ announcements:['Announcements','News and updates from TBARC'],
+ settings:['Account Settings','Manage your portal access']
+};
+document.querySelectorAll('.nav button').forEach(button=>button.addEventListener('click',()=>{
+ const page=button.dataset.page;
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===button));
+ document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+ $(page+'Panel').classList.add('active');
+ $('pageHeading').textContent=pageInfo[page][0];$('pageSub').textContent=pageInfo[page][1];
+ window.scrollTo({top:0,behavior:'smooth'});
+}));
+</script>
+</body>
+</html>
