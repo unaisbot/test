@@ -16,7 +16,7 @@ form{background:#fff;border:1px solid var(--border);border-radius:17px;padding:c
 .section{padding:0 0 27px;margin:0 0 27px;border-bottom:1px solid var(--border)}.section:last-of-type{border:0;margin-bottom:0}.section h2{font-size:19px;color:var(--dark);margin:0 0 5px}.hint{font-size:13px;color:var(--muted);margin:0 0 19px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px}.field{min-width:0}.field.full{grid-column:1/-1}label,.group-label{display:block;font-weight:700;font-size:13px;margin:0 0 6px}small.required{color:#a13c2d}
 input,select,textarea{width:100%;font:inherit;font-size:14px;color:var(--text);background:#fff;border:1px solid #cfdacf;border-radius:8px;padding:11px 12px;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #07533318}textarea{min-height:112px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #07533318}textarea{min-height:112px;resize:vertical}.phone-input{display:flex;align-items:stretch}.phone-input .country-code{display:flex;align-items:center;padding:0 13px;background:#f0f6ef;border:1px solid #cfdacf;border-right:0;border-radius:8px 0 0 8px;color:var(--dark);font-weight:700;white-space:nowrap}.phone-input input{border-radius:0 8px 8px 0;min-width:0}
 .choice-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.choice-box{border:1px solid var(--border);border-radius:11px;padding:15px;background:#fcfefb}.choice-box h3{font-size:14px;color:var(--dark);margin:0 0 10px}.checklist{display:grid;gap:8px}.check{display:flex;align-items:flex-start;gap:9px;font-size:13px;font-weight:400;margin:0;line-height:1.4}.check input{width:16px;height:16px;flex:0 0 16px;margin:1px 0 0;accent-color:var(--green);padding:0}
 .upload-note{font-size:12px;color:var(--muted);margin:6px 0 0}.consent{display:flex;align-items:flex-start;gap:10px;font-size:13px}.consent input{width:17px;height:17px;flex:0 0 17px;margin-top:3px;accent-color:var(--green)}
 .actions{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:22px}.btn{display:inline-block;border:0;border-radius:8px;padding:13px 22px;background:var(--green);color:#fff;font-weight:800;font-size:14px;cursor:pointer;text-decoration:none}.btn:hover{background:var(--dark)}.back{font-size:13px;font-weight:700;text-decoration:none}
@@ -37,7 +37,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:0 15px 25px}
 <div class="field"><label for="age">Age <small class="required">*</small></label><input id="age" name="age" type="number" min="16" max="100" required></div>
 <div class="field"><label for="gender">Gender</label><select id="gender" name="gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option><option>Self-describe</option></select></div>
 <div class="field"><label for="email">Email address <small class="required">*</small></label><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-<div class="field"><label for="phone">WhatsApp number (with country code) <small class="required">*</small></label><input id="phone" name="whatsapp" type="tel" autocomplete="tel" placeholder="+91 ..." required></div>
+<div class="field"><label for="phone">WhatsApp number <small class="required">*</small></label><div class="phone-input"><span class="country-code" aria-label="India country code">🇮🇳 +91</span><input id="phone" name="whatsapp" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit mobile number" maxlength="10" pattern="[6-9][0-9]{9}" aria-describedby="phoneHelp" required></div><p class="upload-note" id="phoneHelp">Enter your 10-digit Indian mobile number. Country code +91 is added automatically.</p></div>
 <div class="field full"><label for="location">Town / District / State <small class="required">*</small></label><input id="location" name="location" placeholder="e.g. Manjeri, Malappuram, Kerala" required></div>
 </div>
 </section>
@@ -155,6 +155,13 @@ form.addEventListener('submit', async function(event) {
     return;
   }
 
+  const mobile = document.getElementById('phone').value.replace(/\D/g, '');
+  if (!/^[6-9]\d{9}$/.test(mobile)) {
+    alert('Please enter a valid 10-digit Indian mobile number.');
+    document.getElementById('phone').focus();
+    return;
+  }
+
   submitButton.disabled = true;
   submitButton.textContent = 'Submitting application…';
 
@@ -168,7 +175,7 @@ form.addEventListener('submit', async function(event) {
       email: document.getElementById('email').value,
       age: document.getElementById('age').value,
       gender: document.getElementById('gender').value,
-      whatsapp: document.getElementById('phone').value,
+      whatsapp: '+91' + document.getElementById('phone').value.replace(/\D/g, ''),
       location: document.getElementById('location').value,
       qualification: document.getElementById('qualification').value,
       field: document.getElementById('field').value,
